@@ -1,0 +1,84 @@
+# ============================================
+# Edge AI Industrial - Docker Compose
+# Ambiente de desenvolvimento local
+# ============================================
+
+services:
+  # PostgreSQL + TimescaleDB
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: edgeai-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: edgeai
+      POSTGRES_USER: edgeai
+      POSTGRES_PASSWORD: edgeai
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U edgeai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # EMQX MQTT Broker
+  emqx:
+    image: emqx/emqx:5.6
+    container_name: edgeai-emqx
+    ports:
+      - "1883:1883"    # MQTT
+      - "8083:8083"    # MQTT WebSocket
+      - "8084:8084"    # MQTT WSS
+      - "8883:8883"    # MQTT SSL
+      - "18083:18083"  # Dashboard
+    environment:
+      EMQX_NAME: edgeai-broker
+      EMQX_HOST: 0.0.0.0
+    volumes:
+      - emqx_data:/opt/emqx/data
+    healthcheck:
+      test: ["CMD", "emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Apache Kafka (KRaft mode - no Zookeeper)
+  kafka:
+    image: apache/kafka:3.7.0
+    container_name: edgeai-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      CLUSTER_ID: edge-ai-kafka-cluster-001
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: edgeai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  emqx_data:
+  kafka_data:
+  redis_data:
