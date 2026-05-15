@@ -1,0 +1,15 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/edgeai_dev
+    username: edgeai
+    password: edgeai
+
+logging:
+  level:
+    com.edgeai: DEBUG
+    org.springframework.security: DEBUG

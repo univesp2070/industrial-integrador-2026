@@ -1,0 +1,54 @@
+spring:
+  application:
+    name: edge-ai-industrial-backend
+
+  # Database
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:edgeai}
+    username: ${DB_USERNAME:edgeai}
+    password: ${DB_PASSWORD:edgeai}
+    driver-class-name: org.postgresql.Driver
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Kafka
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    consumer:
+      group-id: edge-ai-group
+      auto-offset-reset: earliest
+    producer:
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+server:
+  port: ${SERVER_PORT:8082}
+
+# MQTT
+mqtt:
+  broker-url: ${MQTT_BROKER_URL:tcp://broker.emqx.io:1883}
+  client-id: ${MQTT_CLIENT_ID:edge-ai-backend}
+  username: ${MQTT_USERNAME:}
+  password: ${MQTT_PASSWORD:}
+  topics: sensor/data/#, device/status/#
+
+# JWT
+jwt:
+  secret: ${JWT_SECRET:Y2hhbmdlLXRoaXMtaW4tcHJvZHVjdGlvbi1rZXktMzI=}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
